@@ -1,69 +1,83 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "Tim Steeman"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+Tim Steeman  
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo=TRUE)
-library(readr)
-library(dplyr)
-library(ggplot2)
-```
+
 
 
 ## Loading and preprocessing the data
 
-```{r}
+
+```r
 activity.dat = read_csv("activity.csv")
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   steps = col_integer(),
+##   date = col_date(format = ""),
+##   interval = col_integer()
+## )
 ```
 
 
 ## What is mean total number of steps taken per day?
 
-```{r}
+
+```r
 activity.step.totals = activity.dat %>% filter(!is.na(steps)) %>% group_by(date) %>% summarise(total= sum(steps))
 activity.step.totals %>% ggplot(aes(x=total)) +
     geom_histogram(binwidth = 500)
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```r
 activity.step.totals.summary = summary(activity.step.totals$total)
 
 options(scipen=999)
 ```
 
-The mean of the total number of steps taken per day is: `r activity.step.totals.summary["Mean"]` and the median is: `r activity.step.totals.summary["Median"][[1]]`.
+The mean of the total number of steps taken per day is: 10770 and the median is: 10760.
 
-```{r}
+
+```r
 activity.step.totals %>% ggplot(aes(x ="-" , y=total)) +
     geom_boxplot() +
     xlab("All days") +
     ylab("Total number of steps per day")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 
 ## What is the average daily activity pattern?
 
-```{r}
+
+```r
 average.by.interval = activity.dat %>% filter(!is.na(steps)) %>%  group_by(interval) %>% summarise(averageSteps = mean(steps) )
 
 plot(x=average.by.interval$interval,y=average.by.interval$averageSteps, type="l", xlab = "Interval", ylab="Average steps")
 ```
-```{r}
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
 max.avg.steps = average.by.interval[which(average.by.interval$averageSteps == max(average.by.interval$averageSteps)),"interval"]
 ```
-The interval for the maximum average number of steps is: `r max.avg.steps` 
+The interval for the maximum average number of steps is: 835 
 
 ## Imputing missing values
 
-```{r}
+
+```r
 totalmissing.rows = sum(!complete.cases(activity.dat))
 ```
 
-Total number of rows with missing values: `r totalmissing.rows`.
+Total number of rows with missing values: 2304.
 
-```{r}
+
+```r
 #get the indexes of rows that have na values for steps
 indexes.with.nas = which(is.na(activity.dat$steps))
 # get the associated interval numbers
@@ -76,25 +90,30 @@ vals = unlist(sapply(intervals.with.na.values$interval, function(x) average.by.i
 activity.no.na = activity.dat
 #fill in the na values with average step values for each interval
 activity.no.na[indexes.with.nas,"steps"] = vals
-
 ```
-```{r}
+
+```r
 activity.step.totals.complete = activity.no.na %>% group_by(date) %>% summarise(total= sum(steps))
 activity.step.totals.complete %>% ggplot(aes(x=total)) +
     geom_histogram(binwidth = 500)
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+```r
 activity.step.totals.complete.summary = summary(activity.step.totals.complete$total)
 
 options(scipen=999)
 ```
 
-The mean of the total number of steps taken per day is: `r activity.step.totals.complete.summary["Mean"]` and the median is: `r activity.step.totals.complete.summary["Median"][[1]]`.
+The mean of the total number of steps taken per day is: 10770 and the median is: 10770.
 
 Totals median and frequencies of step counts are slightly higher. But not much has changed in the data.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r, message=FALSE}
+
+```r
 activity.no.na$dayType = ifelse(weekdays(activity.no.na$date) %in% c("Saturday", "Sunday"),"Weekend", "Weekday")
 
 byDayType = activity.no.na %>% group_by(dayType,interval) %>% summarise(avsteps = mean(steps))
@@ -105,4 +124,6 @@ byDayType %>% ggplot(aes(x=interval, y=avsteps)) +
     xlab("Interval") +
     ylab("Average steps")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
